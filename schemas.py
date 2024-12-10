@@ -10,4 +10,4 @@ class reponse_server_info(BaseModel):
        ip: str
        
 class server_ip_delete(BaseModel):
-       ip: str
+       id: int

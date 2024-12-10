@@ -28,19 +28,17 @@ async def server_addition(server_data: schemas.server_info_schema, db: Session =
 @router.get("/list_servers", response_model=list[schemas.reponse_server_info])
 async def list_servers(db: Session = Depends(get_db)):
     get_ip=db.query(models.serverinfo_model).filter(models.serverinfo_model.ip).all()
-    if not get_ip:
-       raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ip not found") 
     return get_ip
 
 
 @router.delete("/server_removal")
-def delete_eol(server_ip_delete: schemas.server_ip_delete, db: Session = Depends(get_db)):
-    del_ip =  db.query(models.serverinfo_model).filter(models.serverinfo_model.ip == server_ip_delete.ip).first()
+def delete_eol(server_ip_delete: schemas.server_ip_delete, db: Session = Depends(get_db), response_model=list[schemas.server_info_schema]):
+    del_ip =  db.query(models.serverinfo_model).filter(models.serverinfo_model.id == server_ip_delete.id).first()
     if not del_ip:
        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ip not found") 
     db.delete(del_ip)
     db.commit()
-    return "ip entry deleted {}".format(server_ip_delete.ip)
+    return del_ip
 
 
 
