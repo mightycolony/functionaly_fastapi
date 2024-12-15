@@ -5,7 +5,14 @@ from database import SessionLocal,engine
 from sqlalchemy.orm import Session
 import models
 import inspect
+
+import ast
 import importlib
+
+from mainfunctionality.functionality import ConnetionMaker
+con = ConnetionMaker()
+
+
 router = APIRouter(
     tags=['Servers'],
 )
@@ -22,6 +29,8 @@ def get_db():
 import os
 import importlib.util
 import inspect
+import ast
+
 # from mainfunctionality.functionality import ssh_connection
 
 path=os.getcwd() + "/mainfunctionality/kernelspace_scripts/kernel_functions.py"
@@ -30,6 +39,7 @@ print(file_name)
 spec = importlib.util.spec_from_file_location(file_name, path)
 mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
+
 
 
 
@@ -48,8 +58,32 @@ def kernelspace_list():
 
 @router.post("/execute_action")
 async def execute_action(request: Request):
+    data={}
     body = await request.json()
-    function = body.get("function")
+    functions = body.get("function")
     ip_os_details = body.get("ip_os_details")
-    print(function,ip_os_details)
-    return "value found!!"
+    func_dict={}
+    new_cont={}
+    final_cont={}
+    for name, obj in inspect.getmembers(mod):
+        if inspect.isfunction(obj):
+            func_dict[name] =  f"{inspect.getsource(obj)}"
+    
+    for j in ip_os_details:
+        converted_list = map(str, j)
+        server_details = ''.join(converted_list)
+        ip = server_details.split("-")[0]
+        os = server_details.split("-")[1]
+
+        for i in functions:
+            print(i)
+            content=func_dict[i]
+            ndummy_dict=con.ssh_call(ip,i,content)
+
+            my_dict = ast.literal_eval(ndummy_dict)
+            new_cont[i] = my_dict
+        final_cont[ip] = new_cont
+        
+        print(final_cont)
+
+    return final_cont
