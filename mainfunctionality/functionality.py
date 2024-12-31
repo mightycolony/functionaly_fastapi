@@ -38,8 +38,8 @@ class ConnetionMaker:
                         function_code = textwrap.dedent("""import subprocess\n{}\n{}""").format(content,func_call)     
                         exec_code =  textwrap.dedent("""{}\nprint(remote_function.{})""").format("import remote_function",func_call) 
                         hostname = "{}".format(ip).strip()
-                        username = "notu"
-                        password = "notu"
+                        username = "terra"
+                        password = "terra"
                         client = paramiko.SSHClient()
                         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                         client.connect(hostname, username=username, password=password)
