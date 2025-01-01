@@ -11,3 +11,6 @@ class reponse_server_info(BaseModel):
        
 class server_ip_delete(BaseModel):
        id: int
+
+class foreman(BaseModel):
+       hostgroup: str

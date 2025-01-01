@@ -1,6 +1,6 @@
 import subprocess
-def func1(a,b):
-        result = subprocess.run(['uname', '-r'], capture_output=True, text=True)
+def boot_parameters():
+        result = subprocess.run("cat /proc/cmdline", shell=True, capture_output=True, text=True)
         return {"kernel_version":result.stdout.strip()}
 
 def func2():
@@ -11,7 +11,7 @@ def func3():
         pass
 
 
-func1(2,3)
+boot_parameters()
 func2()
 func3()
 
