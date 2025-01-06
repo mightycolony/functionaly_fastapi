@@ -20,5 +20,6 @@ class foreman_db(Base):
     ip = Column(String)
     hostgroup_id = Column(String)
     hostgroupname = Column(String)
+    classes = Column(String)
     
     
