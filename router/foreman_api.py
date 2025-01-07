@@ -108,3 +108,34 @@ async def add_hosts(actual_id: int, foreman_input: schemas.foreman):
 
 
 
+# to find what hostgroup does a host has
+@router.get("/list_host_for_a_hostgroup/{host}")
+async def list_host_for_a_hostgroup(host: str):
+    url = f"https://192.168.1.10/api/hosts?search={host}"
+    response_hstgroup = requests.get(url, headers=headers, auth=HTTPBasicAuth(username, api_token), verify=False) 
+    if response_hstgroup.status_code == 200:
+        return response_hstgroup.json().get('results')[0]["hostgroup_name"]
+    else:
+        return "No Hostgroup added!"
+
+
+##list puppet class for a hostgroup_id
+@router.get("/list_hostgroups/{hostgroupname}")
+async def list_hostgroups(hostgroupname: str):
+    url_search=f"https://192.168.1.10/api/hostgroups?search=name={hostgroupname}"
+    get_hostgroup_id = requests.get(url_search, headers=headers, auth=HTTPBasicAuth(username, api_token), verify=False) 
+    if get_hostgroup_id.status_code == 200:
+        hostgroup_id=get_hostgroup_id.json().get("results")[0]["id"]
+    class_list=""
+    print(hostgroup_id)
+    url=f"https://192.168.1.10/api/hostgroups/{hostgroup_id}"
+    rsp_class = requests.get(url, headers=headers, auth=HTTPBasicAuth(username, api_token), verify=False) 
+    if rsp_class.status_code == 200: 
+        for i in range(0, len(rsp_class.json()["all_puppetclasses"]) ):
+            class_list += rsp_class.json()["all_puppetclasses"][i]["name"] + '\n'    
+        return class_list.rstrip("\n")
+    
+    
+    
+
+
