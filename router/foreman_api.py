@@ -27,7 +27,7 @@ headers = {
 
 @router.get("/list_update_foreman_inv")
 async def list_hosts(db: Session = Depends(get_db)):
-    url = f"https://192.168.1.10/api/hosts"
+    url = f"https://192.168.1.8/api/hosts"
     response = requests.get(url, headers=headers, auth=HTTPBasicAuth(username, api_token), verify=False)   
     dict_new=response.json()
     value=dict_new.get("total")
@@ -39,7 +39,7 @@ async def list_hosts(db: Session = Depends(get_db)):
             name=dict_new.get("results")[i]["certname"]
             ip=dict_new.get("results")[i]["ip"]
             hstgrp_id=dict_new.get("results")[i]["hostgroup_id"]
-            search_url = f"https://192.168.1.10/foreman_puppet/api/hostgroups/{hstgrp_id}/puppetclasses"
+            search_url = f"https://192.168.1.8/foreman_puppet/api/hostgroups/{hstgrp_id}/puppetclasses"
             response_class = requests.get(search_url, headers=headers, auth=HTTPBasicAuth(username, api_token), verify=False) 
             class_names=response_class.json()
             result = class_names.get('results', None)
@@ -93,7 +93,7 @@ async def list_hosts(db: Session = Depends(get_db)):
 
 @router.put("/add_host_to_hostgroup/{actual_id}")
 async def add_hosts(actual_id: int, foreman_input: schemas.foreman):
-    url = f"https://192.168.1.10/api/hosts/{actual_id}"
+    url = f"https://192.168.1.8/api/hosts/{actual_id}"
     data = {
     "host": {
         "ip": "{}".format(foreman_input.ip),
@@ -111,31 +111,78 @@ async def add_hosts(actual_id: int, foreman_input: schemas.foreman):
 # to find what hostgroup does a host has
 @router.get("/list_host_for_a_hostgroup/{host}")
 async def list_host_for_a_hostgroup(host: str):
-    url = f"https://192.168.1.10/api/hosts?search={host}"
+    url = f"https://192.168.1.8/api/hosts?search={host}"
     response_hstgroup = requests.get(url, headers=headers, auth=HTTPBasicAuth(username, api_token), verify=False) 
     if response_hstgroup.status_code == 200:
-        return response_hstgroup.json().get('results')[0]["hostgroup_name"]
+        x = response_hstgroup.json().get('results')[0]["hostgroup_name"]
+        if x == None:
+            return "No Hostgroup associated"
+        else:
+            return x
     else:
-        return "No Hostgroup added!"
+        return response_hstgroup.status_code
 
 
 ##list puppet class for a hostgroup_id
 @router.get("/list_hostgroups/{hostgroupname}")
 async def list_hostgroups(hostgroupname: str):
-    url_search=f"https://192.168.1.10/api/hostgroups?search=name={hostgroupname}"
+    print(hostgroupname)
+    url_search=f"https://192.168.1.8/api/hostgroups?search=name={hostgroupname}"
     get_hostgroup_id = requests.get(url_search, headers=headers, auth=HTTPBasicAuth(username, api_token), verify=False) 
     if get_hostgroup_id.status_code == 200:
         hostgroup_id=get_hostgroup_id.json().get("results")[0]["id"]
-    class_list=""
+    class_list=[]
     print(hostgroup_id)
-    url=f"https://192.168.1.10/api/hostgroups/{hostgroup_id}"
+    url=f"https://192.168.1.8/api/hostgroups/{hostgroup_id}"
     rsp_class = requests.get(url, headers=headers, auth=HTTPBasicAuth(username, api_token), verify=False) 
     if rsp_class.status_code == 200: 
         for i in range(0, len(rsp_class.json()["all_puppetclasses"]) ):
-            class_list += rsp_class.json()["all_puppetclasses"][i]["name"] + '\n'    
-        return class_list.rstrip("\n")
+            class_list.append(rsp_class.json()["all_puppetclasses"][i]["name"])
+        print(type(class_list))
+        return class_list
     
     
     
 
+#get all class
 
+@router.get("/list_classes")
+async def list_classes():
+    total_class=[]
+    url=f"https://192.168.1.8/foreman_puppet/api/puppetclasses"
+    get_classes = requests.get(url, headers=headers, auth=HTTPBasicAuth(username, api_token), verify=False) 
+    if get_classes.status_code == 200:
+        results=get_classes.json().get("results")
+        print(results)
+        for key, value in results.items():
+            if len(value) > 1:
+                for i in range(0, len(value)):
+                    final_class = {"value": value[i]["name"], "label": value[i]["name"]}
+                    total_class.append(final_class)
+                    
+            else:
+                final_class = {"value": value[0]["name"], "label": value[0]["name"]}
+                total_class.append(final_class)
+
+        return  total_class
+
+#add class to a hst group
+@router.get("/list_of_class")
+async def list_of_class():
+    id_list=[]
+    
+    url=f"https://192.168.1.8/foreman_puppet/api/puppetclasses"
+    get_classes = requests.get(url, headers=headers, auth=HTTPBasicAuth(username, api_token), verify=False) 
+    result=get_classes.json().get("results")
+    for key, value in result.items():
+        if len(value) > 1:
+            for i in range(0, len(value)):
+                x = {value[i]["name"]: value[i]["id"]}
+                id_list.append(x)
+        else:
+            x = {value[0]["name"]: value[0]["id"]}
+            id_list.append(x)
+    return id_list
+            
+            
+    
